@@ -3,23 +3,35 @@
 from algosdk import mnemonic
 from algosdk import account
 from web3 import Web3
+from send_tokens import connect_to_eth, connect_to_algo
 
 """
 Generating key-pairs for the exchange on both the Ethereum and Algorand platforms
 """
 
-#generate key-pairs for Ethereum
-w3.eth.account.enable_unaudited_hdwallet_features()
-acct,mnemonic_secret = w3.eth.account.create_with_mnemonic()
-#save Ethereum account information
-acct = w3.eth.account.from_mnemonic(mnemonic_secret)
-eth_pk = acct._address
-eth_sk = acct._private_key
+
+def generate_eth_keys():
+
+    # generate key-pairs for Ethereum
+    w3 = connect_to_eth()
+    w3.eth.account.enable_unaudited_hdwallet_features()
+    acct, mnemonic_secret = w3.eth.account.create_with_mnemonic()
+    # save Ethereum account information
+    acct = w3.eth.account.from_mnemonic(mnemonic_secret)
+    eth_pk = acct._address
+    eth_sk = acct._private_key
+    return eth_sk, eth_pk
 
 
-#generate accounts for Algorand
-mnemonic_secret = "YOUR MNEMONIC HERE"
-sk = mnemonic.to_private_key(mnemonic_secret)
-pk = mnemonic.to_public_key(mnemonic_secret)
+
+def generate_algo_keys():
+
+    #generate accounts for Algorand
+    # generate an account and use mnemonics to store both public and private keys
+    (private_key, sender_pk) = account.generate_account()  # generate_account() returns private key and address
+    mnemonic_secret = mnemonic.from_private_key(private_key)
+    algo_sk = mnemonic.to_private_key(mnemonic_secret)
+    algo_pk = mnemonic.to_public_key(mnemonic_secret)
+    return algo_sk, algo_pk
 
 
