@@ -13,7 +13,7 @@ def connect_to_algo(connection_type=''):
     if connection_type == "indexer":
         # TODO: return an instance of the v2client indexer. This is used for checking payments for tx_id's
         algod_address = "https://testnet-algorand.api.purestake.io/idx2"
-
+        #**********************************
 
 
     else:
@@ -21,13 +21,15 @@ def connect_to_algo(connection_type=''):
         # Tutorial Link: https://developer.algorand.org/tutorials/creating-python-transaction-purestake-api/
         algod_address = "https://testnet-algorand.api.purestake.io/ps2"
 
+        # **********************************
+
     return None
 
 
 def send_tokens_algo(acl, sender_sk, txes):
     params = acl.suggested_params
 
-    # TODO: You might want to adjust the first/last valid rounds in the suggested_params
+    # TODO: You might want to adjust the first/last valid rounds in the suggested_params #**************
     #       See guide for details
 
     # TODO: For each transaction, do the following:
@@ -53,6 +55,9 @@ def send_tokens_algo(acl, sender_sk, txes):
 
         try:
             print(f"Sending {tx['amount']} microalgo from {sender_pk} to {tx['receiver_pk']}")
+            # This function expects a dictionary (not a DB object).
+            # Note the square brackets which aren’t supported by a DB object.
+            # In our program, we built this tx dictionary using the fill_orders method.
 
             # TODO: Send the transaction to the testnet
 
@@ -61,7 +66,8 @@ def send_tokens_algo(acl, sender_sk, txes):
             acl.send_transaction(signed_tx)
             tx_id = signed_tx.transaction.get_txid()
             tx_ids.append(tx_id)
-           #params.first += 1
+
+            params.first += 1
 
             txinfo = wait_for_confirmation_algo(acl, txid=tx_id)  #**********
             print(f"Sent {tx['amount']} microalgo in transaction: {tx_id}\n")
@@ -144,7 +150,7 @@ def send_tokens_eth(w3, sender_sk, txes):  # *******************************
         tx_dict = {
             'nonce': starting_nonce + i,  # Locally update nonce
             'gasPrice': w3.eth.gas_price,
-            'gas': w3.eth.estimate_gas({'from': sender_pk, 'to': tx.receiver_pk, 'data': b'', 'amount': tx_amount}),
+            'gas': w3.eth.estimate_gas({'from': sender_pk, 'to': tx.receiver_pk, 'data': b'', 'amount': tx.amount}),
             'to': tx.receiver_pk,  # ************************
             'value': tx.amount,
             'data': b''}

@@ -362,14 +362,14 @@ def address():
 
         if content['platform'] == "Ethereum":
             # Your code here
-            get_eth_keys(filename="eth_mnemonic.txt")  #******************
+            #get_eth_keys(filename="eth_mnemonic.txt")  #******************
+            eth_sk, eth_pk = get_eth_keys()
 
 
             return jsonify(eth_pk)
         if content['platform'] == "Algorand":
             # Your code here
-            get_algo_keys() #******************
-
+            algo_sk, algo_pk = get_algo_keys() #******************
 
             return jsonify(algo_pk)
 
@@ -378,7 +378,11 @@ def address():
 def trade():
     print("In trade", file=sys.stderr)
     connect_to_blockchains()
-    #get_keys()           #**************************
+    get_keys()           #**************************
+    # get_keys was a function from our solution,
+    # but you'll have to write your own method to get_keys for each platform per the instructions.
+
+
     if request.method == "POST":
         content = request.get_json(silent=True)
         columns = ["buy_currency", "sell_currency", "buy_amount", "sell_amount", "platform", "tx_id", "receiver_pk"]
