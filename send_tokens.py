@@ -15,6 +15,9 @@ def connect_to_algo(connection_type=''):
         algod_address = "https://testnet-algorand.api.purestake.io/idx2"
         #**********************************
 
+        headers = {"X-API-Key": algod_token}
+        acl = algod.AlgodClient(algod_token, algod_address, headers)
+
 
     else:
         # TODO: return an instance of the client for sending transactions
@@ -22,8 +25,10 @@ def connect_to_algo(connection_type=''):
         algod_address = "https://testnet-algorand.api.purestake.io/ps2"
 
         # **********************************
+        headers = {"X-API-Key": algod_token}
+        acl = algod.AlgodClient(algod_token, algod_address, headers)
 
-    return None
+    return acl
 
 
 def send_tokens_algo(acl, sender_sk, txes):
@@ -48,9 +53,6 @@ def send_tokens_algo(acl, sender_sk, txes):
         unsigned_tx = transaction.PaymentTxn(sender_pk, params, tx.receiver_pk, tx)  # *******************
 
         # TODO: Sign the transaction
-        # signed_tx = "Replace me with a SignedTransaction object"
-        # stx1 = txn1.sign(sender_sk)
-
         signed_tx = unsigned_tx.sign(sender_sk)
 
         try:

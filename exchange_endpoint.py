@@ -160,6 +160,22 @@ def log_message(d):
     g.session.commit()
 
 
+def store_tx(order):
+    # order is a Order Object #*********************************************
+
+    tx = TX()
+    tx.id = order.id #*****************************************???
+    #tx.platform =  ***************************receiver or sender currency???
+    tx.receiver_pk = order.receiver_pk  #*******************************
+    tx.order_id = order.id
+
+    # add it to the Order
+    g.session.add(tx)
+    g.session.commit()
+
+    return tx
+
+
 def get_algo_keys():
     # TODO: Generate or read (using the mnemonic secret)
     # the algorand public/private keys
@@ -325,14 +341,16 @@ def execute_txes(txes):
         # get sender_sk # ************************
 
 
-        tx_id = send_tokens_eth(w3, eth_sk, eth_tx)  # Send tokens on the eth testnets
+        tx_ids = send_tokens_eth(w3, eth_sk, eth_tx)  # Send tokens on the eth testnets
+        for tx_id in tx_ids: #*******************
+
         #
 
     for algo_tx in algo_txes:
         acl = connect_to_algo(connection_type='') # ************************
         # get sender_sk # ************************
 
-        tx_id = send_tokens_algo( acl, algo_sk, algo_tx) #Send tokens on the Algorand testnets
+        tx_ids = send_tokens_algo( acl, algo_sk, algo_tx) #Send tokens on the Algorand testnets
 
     # Add all transactions to the TX table (see models.py) ************************
     #When a transaction is successfully executed, i.e., when the exchange sends tokens to two counterparties
@@ -365,8 +383,8 @@ def address():
             #get_eth_keys(filename="eth_mnemonic.txt")  #******************
             eth_sk, eth_pk = get_eth_keys()
 
-
             return jsonify(eth_pk)
+
         if content['platform'] == "Algorand":
             # Your code here
             algo_sk, algo_pk = get_algo_keys() #******************
@@ -379,7 +397,7 @@ def trade():
     print("In trade", file=sys.stderr)
     connect_to_blockchains()
     get_keys()           #**************************
-    # get_keys was a function from our solution,
+    # get_keys was a function from our solution ????
     # but you'll have to write your own method to get_keys for each platform per the instructions.
 
 
