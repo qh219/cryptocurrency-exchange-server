@@ -97,7 +97,7 @@ def check_sig(content):
     payload = json.dumps(content['payload'])  # get signature (entire payload dictionary) str from content
     platform = content['payload']['platform']  # get platform str information from content
 
-    if (platform == 'Ethereum'):
+    if platform == 'Ethereum':
 
         eth_encoded_msg = eth_account.messages.encode_defunct(text=payload)
         eth_pk = content['payload']['sender_pk']
@@ -109,7 +109,7 @@ def check_sig(content):
             return False
 
     # check if the signature is generated from Algorand
-    elif (platform == 'Algorand'):
+    elif platform == 'Algorand':
 
         algo_sig_str = sig
         algo_pk = content['payload']['sender_pk']
@@ -163,17 +163,18 @@ def log_message(d):
 def store_tx(order):
     # order is a Order Object #*********************************************
 
-    tx = TX()
-    tx.id = order.id #*****************************************???
-    #tx.platform =  ***************************receiver or sender currency???
-    tx.receiver_pk = order.receiver_pk  #*******************************
-    tx.order_id = order.id
+    tx_object = TX() # create a TX object
+    #tx_object.id = order.id #*****************************************???
+    tx_object.platform =  order.sell_currency #****************************
+    tx_object.receiver_pk = order.sender_pk  #*******************************
+    tx_object.order_id = order.id
+    tx_object.tx_id = order.tx_id
 
-    # add it to the Order
-    g.session.add(tx)
+    # add it to the TX table
+    g.session.add(tx_object)
     g.session.commit()
 
-    return tx
+    return tx_object
 
 
 def get_algo_keys():
@@ -270,11 +271,15 @@ def order_fill_detail(orderDict, numIter):
                 new_order_flag = True
 
                 # *************************
+                tx_object = store_tx(new_order)
+                txes.append(tx_object)
 
             else:
                 g.session.commit()
 
                 # *************************
+                tx_object = store_tx(new_order)
+                txes.append(tx_object)
 
             if new_order.sell_amount < existing_order.buy_amount:
                 remained_difference = existing_order.buy_amount - new_order.sell_amount
@@ -290,6 +295,11 @@ def order_fill_detail(orderDict, numIter):
 
                 g.session.add(child_order)
                 g.session.commit()
+
+                ##############
+                tx_object = store_tx(existing_order)
+                txes.append(tx_object)
+
             break
 
     # ************************* txes
@@ -314,6 +324,38 @@ def match_orders(existing_order, new_order):
         return False
 
 
+def check_transaction(order):  #*****************************
+    """When a user submits an order to the endpoint “/trade” the submission data should have a “tx_id” field.
+    For valid orders, this will correspond to a transaction ID on the blockchain specified by “sell_currency.”
+    In order to see if the order is valid, the exchange server must check that the specified transaction actually
+    transferred “sell_amount” to the exchange’s address.
+    the “/trade” endpoint should take an additional field “tx_id” which specifies the transaction ID (sometimes called the transaction hash) of the transaction that deposited tokens to the exchange. In particular, before filling an order, you must check
+        1. The transaction specified by tx_id is a valid transaction on the platform specified by ‘sell_currency’
+        2. The amount of the transaction is ‘sell_amount’
+        3. The sender of the transaction is ‘sender_pk’   ****************************???????
+        4. The receiver of the transaction is the exchange server (i.e., the key specified by the ‘/address’ endpoint) *****
+    """
+
+    platform = order.sell_currency
+    flag = False
+
+    if platform == 'Ethereum':
+        w3 = connect_to_eth()
+        tx = w3.eth.get_transaction(order.tx_id)    #tx = w3.eth.get_transaction(eth_tx_id) return transactions
+        #********************* return lists or a transation ???
+        if (tx['platform']== order.sell_currency ) and (tx['amount'] == order.sell_amount):
+            flag = True
+
+    elif platform == 'Algorand':
+        acl = connect_to_algo(connection_type="indexer")
+        transaction_list = acl.search_transactions(order.tx_id)  #return a list of transactions satisfying the conditions
+        for tx in transaction_list:
+            if (tx['platform'] == order.sell_currency) and (tx['amount'] == order.sell_amount):
+                flag = True
+
+    return flag
+
+
 def execute_txes(txes):
     if txes is None:
         return True
@@ -336,21 +378,36 @@ def execute_txes(txes):
     #          We've provided the send_tokens_algo and send_tokens_eth skeleton methods in send_tokens.py
     #       2. Add all transactions to the TX table (see models.py) EVERY ITERATION
 
-    for eth_tx in eth_txes:
+    for eth_tx_object in eth_txes:
         w3 = connect_to_eth()
-        # get sender_sk # ************************
+        tx_ids = send_tokens_eth(w3, eth_sk, eth_tx_object)  # Send tokens on the eth testnets
+
+        for txid in tx_ids: #*******************
+            tx_object = TX()
+            tx_object.platform = eth_tx_object['platform']
+            tx_object.receiver_pk = eth_tx_object.receiver_pk
+            tx_object.order_id = eth_tx_object.order_id
+            tx_object.tx_id = txid  #txid is transaction id or tx_id??????????????????************
+            # add it to the TX table
+            g.session.add(tx_object)
+            g.session.commit()
 
 
-        tx_ids = send_tokens_eth(w3, eth_sk, eth_tx)  # Send tokens on the eth testnets
-        for tx_id in tx_ids: #*******************
-
-        #
-
-    for algo_tx in algo_txes:
+    for algo_tx_object in algo_txes:
         acl = connect_to_algo(connection_type='') # ************************
-        # get sender_sk # ************************
+        # Send tokens on the Algorand testnets, return a list of transaction id's
+        tx_ids = send_tokens_algo( acl, algo_sk, algo_tx_object)
 
-        tx_ids = send_tokens_algo( acl, algo_sk, algo_tx) #Send tokens on the Algorand testnets
+        for txid in tx_ids:
+            tx_object = TX()
+            tx_object.platform = algo_tx_object['platform']
+            tx_object.receiver_pk = algo_tx_object.receiver_pk
+            tx_object.order_id = algo_tx_object.order_id
+            tx_object.tx_id = txid  #txid is transaction id or tx_id??????????????????************
+            # add it to the TX table
+            g.session.add(tx_object)
+            g.session.commit()
+
 
     # Add all transactions to the TX table (see models.py) ************************
     #When a transaction is successfully executed, i.e., when the exchange sends tokens to two counterparties
@@ -396,7 +453,7 @@ def address():
 def trade():
     print("In trade", file=sys.stderr)
     connect_to_blockchains()
-    get_keys()           #**************************
+    #get_keys()           #**************************
     # get_keys was a function from our solution ????
     # but you'll have to write your own method to get_keys for each platform per the instructions.
 
@@ -434,16 +491,15 @@ def trade():
 
         signature_check_flag = check_sig(content)  # 1. Check the signature
 
-        if signature_check_flag == True:
+        if signature_check_flag:
             new_order = store_order(content)  # 2. Add the order to the table
             # 3a. Check if the order is backed by a transaction equal to the sell_amount (this is new)
             # ******************
+            if check_transaction(new_order): #********************
 
-
-
-            txes = order_fill(new_order)  # 3b. Fill the order (as in Exchange Server II) if the order is valid
-            execute_txes(txes)  # 4. Execute the transactions  #******************
-            return jsonify(True)
+                txes = order_fill(new_order)  # 3b. Fill the order (as in Exchange Server II) if the order is valid
+                execute_txes(txes)  # 4. Execute the transactions  #******************
+                return jsonify(True)
         else:
             log_message(content['payload'])
             return jsonify(False)

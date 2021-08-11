@@ -71,7 +71,7 @@ def send_tokens_algo(acl, sender_sk, txes):
 
             params.first += 1
 
-            txinfo = wait_for_confirmation_algo(acl, txid=tx_id)  #**********
+            txinfo = wait_for_confirmation_algo(acl, txid=tx_id)  #***************
             print(f"Sent {tx['amount']} microalgo in transaction: {tx_id}\n")
         except Exception as e:
             print(e)
