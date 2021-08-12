@@ -487,11 +487,11 @@ def trade():
             new_order = store_order(content)  # 2. Add the order to the table
             # 3a. Check if the order is backed by a transaction equal to the sell_amount (this is new)
             # ******************
-            #if check_transaction(new_order): #********************
+            if check_transaction(new_order): #********************
 
-            txes = order_fill(new_order)  # 3b. Fill the order (as in Exchange Server II) if the order is valid
-            execute_txes(txes)  # 4. Execute the transactions  #******************
-            return jsonify(True)
+                txes = order_fill(new_order)  # 3b. Fill the order (as in Exchange Server II) if the order is valid
+                execute_txes(txes)  # 4. Execute the transactions  #******************
+                return jsonify(True)
         else:
             log_message(content['payload'])
             return jsonify(False)
