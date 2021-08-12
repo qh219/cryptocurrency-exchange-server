@@ -160,21 +160,6 @@ def log_message(d):
     g.session.commit()
 
 
-def store_tx(order):
-    # order is a Order Object #*********************************************
-
-    tx_object = TX() # create a TX object
-    #tx_object.id = order.id #*****************************************???
-    tx_object.platform =  order.sell_currency #****************************
-    tx_object.receiver_pk = order.sender_pk  #*******************************
-    tx_object.order_id = order.id
-    tx_object.tx_id = order.tx_id
-
-    # add it to the TX table
-    g.session.add(tx_object)
-    g.session.commit()
-
-    return tx_object
 
 
 def get_algo_keys():
@@ -212,8 +197,8 @@ def order_fill(new_order):
 
     child_order_dict = new_order
     while new_order_flag:
-        child_order_dict, new_order_flag, txes = order_fill_detail(child_order_dict, numIter)
-        transactions.extend(txes)  # add a transaction list(i.e. txes) to transactions list
+        child_order_dict, new_order_flag, txes_dict_list = order_fill_detail(child_order_dict, numIter)
+        transactions.extend(txes_dict_list)  # add a transaction list(i.e. txes) to transactions list
         numIter = numIter + 1
 
     return transactions
@@ -224,7 +209,7 @@ def order_fill_detail(orderDict, numIter):
 
     # empty list to store TX object. Need to use matched order to create TX object and append the TX obejct to txes list
     # *************************
-    txes = [] # *************************
+    txes_dict_list = [] # *************************
 
     if numIter < 1:
         new_order = orderDict  # order obj
@@ -271,15 +256,21 @@ def order_fill_detail(orderDict, numIter):
                 new_order_flag = True
 
                 # *************************
-                tx_object = store_tx(new_order)
-                txes.append(tx_object)
+
+
+                tx_dict = {'platform': existing_order.sell_currency, 'order_id': existing_order.id,
+                           'receiver_pk': existing_order.sender_pk, 'amount': existing_order.sell_amount}
+                txes_dict_list.append(tx_dict)
+
 
             else:
                 g.session.commit()
 
+                # order_id: the id of the order (in the Order table) that generated this transaction??????
                 # *************************
-                tx_object = store_tx(new_order)
-                txes.append(tx_object)
+                tx_dict = {'platform': existing_order.sell_currency, 'order_id': existing_order.id,
+                           'receiver_pk': existing_order.sender_pk, 'amount': existing_order.sell_amount}
+                txes_dict_list.append(dict)
 
             if new_order.sell_amount < existing_order.buy_amount:
                 remained_difference = existing_order.buy_amount - new_order.sell_amount
@@ -296,14 +287,15 @@ def order_fill_detail(orderDict, numIter):
                 g.session.add(child_order)
                 g.session.commit()
 
-                ##############
-                tx_object = store_tx(existing_order)
-                txes.append(tx_object)
+                ##############*********************
+                tx_dict = {'platform': new_order.sell_currency, 'order_id': new_order.id,
+                           'receiver_pk': new_order.sender_pk, 'amount': new_order.sell_amount}
+                txes_dict_list.append(tx_dict)
 
             break
 
-    # ************************* txes
-    return child_order_dict, new_order_flag, txes
+    # *************************
+    return child_order_dict, new_order_flag, txes_dict_list
 
 
 def match_orders(existing_order, new_order):
@@ -378,32 +370,32 @@ def execute_txes(txes):
     #          We've provided the send_tokens_algo and send_tokens_eth skeleton methods in send_tokens.py
     #       2. Add all transactions to the TX table (see models.py) EVERY ITERATION
 
-    for eth_tx_object in eth_txes:
+    for eth_tx in eth_txes:
         w3 = connect_to_eth()
-        tx_ids = send_tokens_eth(w3, eth_sk, eth_tx_object)  # Send tokens on the eth testnets
+        tx_ids = send_tokens_eth(w3, eth_sk, eth_tx)  # Send tokens on the eth testnets
 
         for txid in tx_ids: #*******************
             tx_object = TX()
-            tx_object.platform = eth_tx_object['platform']
-            tx_object.receiver_pk = eth_tx_object.receiver_pk
-            tx_object.order_id = eth_tx_object.order_id
+            tx_object.platform = eth_tx['platform']
+            tx_object.receiver_pk = eth_tx['receiver_pk']  ##******************
+            tx_object.order_id = eth_tx['order_id']
             tx_object.tx_id = txid  #txid is transaction id or tx_id??????????????????************
             # add it to the TX table
             g.session.add(tx_object)
             g.session.commit()
 
 
-    for algo_tx_object in algo_txes:
+    for algo_tx in algo_txes:
         acl = connect_to_algo(connection_type='') # ************************
         # Send tokens on the Algorand testnets, return a list of transaction id's
-        tx_ids = send_tokens_algo( acl, algo_sk, algo_tx_object)
+        tx_ids = send_tokens_algo( acl, algo_sk, algo_tx)
 
         for txid in tx_ids:
             tx_object = TX()
-            tx_object.platform = algo_tx_object['platform']
-            tx_object.receiver_pk = algo_tx_object.receiver_pk
-            tx_object.order_id = algo_tx_object.order_id
-            tx_object.tx_id = txid  #txid is transaction id or tx_id??????????????????************
+            tx_object.platform = algo_tx['platform']
+            tx_object.receiver_pk = algo_tx['receiver_pk']
+            tx_object.order_id = algo_tx['order_id']
+            tx_object.tx_id = txid      #txid is transaction id or tx_id??????????????????************
             # add it to the TX table
             g.session.add(tx_object)
             g.session.commit()
@@ -418,7 +410,7 @@ def execute_txes(txes):
     # order_id: the id of the order (in the Order table) that generated this transaction
     # tx_id: the transaction id of the payment transaction (from the Exchange) on the platform specified by platform
 
-    pass
+    # pass
 
 
 """ End of Helper methods"""
@@ -453,7 +445,7 @@ def address():
 def trade():
     print("In trade", file=sys.stderr)
     connect_to_blockchains()
-    #get_keys()           #**************************
+    #get_keys()           #************************** replace it with other two helper functions
     # get_keys was a function from our solution ????
     # but you'll have to write your own method to get_keys for each platform per the instructions.
 
@@ -524,7 +516,7 @@ def order_book():
         one_order_dict['sell_currency'] = order.sell_currency
         one_order_dict['buy_amount'] = order.buy_amount
         one_order_dict['sell_amount'] = order.sell_amount
-        one_order_dict['signature'] = order.signature
+        #one_order_dict['signature'] = order.signature
         one_order_dict['tx_id'] = order.tx_id
         # print(one_order_dict)
         list_order.append(one_order_dict)
