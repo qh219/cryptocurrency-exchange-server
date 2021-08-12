@@ -516,7 +516,7 @@ def order_book():
         one_order_dict['sell_currency'] = order.sell_currency
         one_order_dict['buy_amount'] = order.buy_amount
         one_order_dict['sell_amount'] = order.sell_amount
-        #one_order_dict['signature'] = order.signature
+        one_order_dict['signature'] = order.signature
         one_order_dict['tx_id'] = order.tx_id
         # print(one_order_dict)
         list_order.append(one_order_dict)
