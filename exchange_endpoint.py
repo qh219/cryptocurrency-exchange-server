@@ -438,6 +438,7 @@ def address():
             # Your code here
             algo_sk, algo_pk = get_algo_keys() #******************
 
+            #print(algo_pk)
             return jsonify(algo_pk)
 
 

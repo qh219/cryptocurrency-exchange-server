@@ -40,9 +40,10 @@ def generate_algo_keys():
     #mnemonic_secret = mnemonic.from_private_key(private_key) #*************
 
     mnemonic_secret = "supreme whisper tumble erase section category denial divorce veteran syrup crack mean surround " \
-                      "entire outside assault snake control moment half word govern cheese ability ordinary "
+                      "entire outside assault snake control moment half word govern cheese ability ordinary"
     algo_sk = mnemonic.to_private_key(mnemonic_secret)
     algo_pk = mnemonic.to_public_key(mnemonic_secret)
+    #print(algo_pk)
     return algo_sk, algo_pk
 
 
