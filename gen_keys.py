@@ -37,9 +37,9 @@ def generate_algo_keys():
 
     (private_key, sender_pk) = account.generate_account()  # generate_account() returns private key and address *****
     #***************  store str as mnemonic_secret
-    #mnemonic_secret = mnemonic.from_private_key(private_key) #*************
+    mnemonic_secret = mnemonic.from_private_key(private_key) #*************
 
-    mnemonic_secret = "village token veteran"
+    #mnemonic_secret = "village token veteran"
     algo_sk = mnemonic.to_private_key(mnemonic_secret)
     algo_pk = mnemonic.to_public_key(mnemonic_secret)
     return algo_sk, algo_pk
