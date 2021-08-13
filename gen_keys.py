@@ -35,7 +35,7 @@ def generate_algo_keys():
     #generate accounts for Algorand
     # generate an account and use mnemonics to store both public and private keys
 
-    (private_key, sender_pk) = account.generate_account()  # generate_account() returns private key and address *****
+    #(private_key, sender_pk) = account.generate_account()  # generate_account() returns private key and address *****
     #***************  store str as mnemonic_secret
     #mnemonic_secret = mnemonic.from_private_key(private_key) #*************
 
