@@ -333,10 +333,11 @@ def check_transaction(order):  #*****************************
 
     if platform == 'Ethereum':
         w3 = connect_to_eth()
-        tx = w3.eth.get_transaction(order.tx_id)    #tx = w3.eth.get_transaction(eth_tx_id) return transactions
+        transaction = w3.eth.get_transaction(order.tx_id)    #tx = w3.eth.get_transaction(eth_tx_id) return transactions
         #********************* return lists or a transation ???
-        if (tx['platform']== order.sell_currency ) and (tx['amount'] == order.sell_amount):
-            flag = True
+        for tx in transaction:  #***************test
+            if (tx['platform']== order.sell_currency ) and (tx['amount'] == order.sell_amount):
+                flag = True
 
     elif platform == 'Algorand':
         acl = connect_to_algo(connection_type="indexer")
