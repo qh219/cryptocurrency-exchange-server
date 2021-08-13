@@ -50,6 +50,8 @@ def send_tokens_algo(acl, sender_sk, txes):
         # unsigned_tx = "Replace me with a transaction object"           #****************************
         # tx1 = transaction.PaymentTxn(sender_address,params,receiver_address,amount )
 
+        params.first += 1 #******
+
         #unsigned_tx = transaction.PaymentTxn(sender_pk, params, tx.receiver_pk, tx)  # *******************
         unsigned_tx = transaction.PaymentTxn(sender_pk, params, tx['receiver_pk'], tx['amount'])
 
@@ -69,11 +71,9 @@ def send_tokens_algo(acl, sender_sk, txes):
 
             acl.send_transaction(signed_tx)
             tx_id = signed_tx.transaction.get_txid()
+            txinfo = wait_for_confirmation_algo(acl, txid=tx_id)  #***************
             tx_ids.append(tx_id)
 
-            params.first += 1
-
-            txinfo = wait_for_confirmation_algo(acl, txid=tx_id)  #***************
             print(f"Sent {tx['amount']} microalgo in transaction: {tx_id}\n")
         except Exception as e:
             print(e)

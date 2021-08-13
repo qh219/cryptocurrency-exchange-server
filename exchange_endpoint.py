@@ -492,6 +492,10 @@ def trade():
                 txes = order_fill(new_order)  # 3b. Fill the order (as in Exchange Server II) if the order is valid
                 execute_txes(txes)  # 4. Execute the transactions  #******************
                 return jsonify(True)
+            else:
+                log_message(content['payload'])
+                return jsonify(False)
+
         else:
             log_message(content['payload'])
             return jsonify(False)
