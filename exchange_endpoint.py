@@ -145,7 +145,6 @@ def store_order(content):
     return order_table
 
 
-
 def log_message(d):
     # Takes input d and writes it to the Log table (Log table is part of the models.py file)
 
@@ -160,23 +159,21 @@ def log_message(d):
     g.session.commit()
 
 
-
-
 def get_algo_keys():
     # TODO: Generate or read (using the mnemonic secret)
     # the algorand public/private keys
 
-    algo_sk, algo_pk = gen_keys.generate_algo_keys()  #************
+    algo_sk, algo_pk = gen_keys.generate_algo_keys()  # ************
 
     return algo_sk, algo_pk
 
 
 def get_eth_keys(filename="eth_mnemonic.txt"):
-    #w3 = Web3()  #***********************
+    # w3 = Web3()  #***********************
 
     # TODO: Generate or read (using the mnemonic secret) 
     # the ethereum public/private keys
-    eth_sk, eth_pk = gen_keys.generate_eth_keys()  #************
+    eth_sk, eth_pk = gen_keys.generate_eth_keys()  # ************
 
     return eth_sk, eth_pk
 
@@ -203,13 +200,14 @@ def order_fill(new_order):
 
     return transactions
 
+
 def order_fill_detail(orderDict, numIter):
     child_order_dict = None
     new_order_flag = False
 
     # empty list to store TX object. Need to use matched order to create TX object and append the TX obejct to txes list
     # *************************
-    txes_dict_list = [] # *************************
+    txes_dict_list = []  # *************************
 
     if numIter < 1:
         new_order = orderDict  # order obj
@@ -257,20 +255,32 @@ def order_fill_detail(orderDict, numIter):
 
                 # *************************
 
+                #tx_dict = {'platform': existing_order.sell_currency, 'order_id': existing_order.id,
+                #           'receiver_pk': existing_order.sender_pk, 'amount': existing_order.sell_amount}
 
-                tx_dict = {'platform': existing_order.sell_currency, 'order_id': existing_order.id,
-                           'receiver_pk': existing_order.sender_pk, 'amount': existing_order.sell_amount}
+                new_amount = min(new_order.buy_amount, existing_order.sell_amount)
+                ex_amount = min(existing_order.buy_amount, new_order.sell_amount)
+
+                tx_dict = {'platform': existing_order.buy_currency, 'order_id': existing_order.id,
+                           'receiver_pk': existing_order.receiver_pk, 'amount': ex_amount}
+                tx_dict2 = {'platform': new_order.buy_currency, 'order_id': new_order.id,
+                            'receiver_pk': new_order.receiver_pk, 'amount': new_amount}
+
                 txes_dict_list.append(tx_dict)
-
+                txes_dict_list.append(tx_dict2)
 
             else:
                 g.session.commit()
 
                 # order_id: the id of the order (in the Order table) that generated this transaction??????
                 # *************************
-                tx_dict = {'platform': existing_order.sell_currency, 'order_id': existing_order.id,
-                           'receiver_pk': existing_order.sender_pk, 'amount': existing_order.sell_amount}
-                txes_dict_list.append(dict)
+                tx_dict = {'platform': existing_order.buy_currency, 'order_id': existing_order.id,
+                           'receiver_pk': existing_order.receiver_pk, 'amount': existing_order.sell_amount}
+                tx_dict2 = {'platform': new_order.buy_currency, 'order_id': new_order.id,
+                            'receiver_pk': new_order.receiver_pk, 'amount': new_order.buy_amount}
+
+                txes_dict_list.append(tx_dict)
+                txes_dict_list.append(tx_dict2)
 
             if new_order.sell_amount < existing_order.buy_amount:
                 remained_difference = existing_order.buy_amount - new_order.sell_amount
@@ -287,10 +297,10 @@ def order_fill_detail(orderDict, numIter):
                 g.session.add(child_order)
                 g.session.commit()
 
-                ##############*********************
-                tx_dict = {'platform': new_order.sell_currency, 'order_id': new_order.id,
-                           'receiver_pk': new_order.sender_pk, 'amount': new_order.sell_amount}
-                txes_dict_list.append(tx_dict)
+                ##############********************* Not nedd to add
+                #tx_dict = {'platform': new_order.sell_currency, 'order_id': new_order.id,
+                #           'receiver_pk': new_order.sender_pk, 'amount': new_order.sell_amount}
+                #txes_dict_list.append(tx_dict)
 
             break
 
@@ -316,7 +326,7 @@ def match_orders(existing_order, new_order):
         return False
 
 
-def check_transaction(order):  #*****************************
+def check_transaction(order):  # *****************************
     """When a user submits an order to the endpoint “/trade” the submission data should have a “tx_id” field.
     For valid orders, this will correspond to a transaction ID on the blockchain specified by “sell_currency.”
     In order to see if the order is valid, the exchange server must check that the specified transaction actually
@@ -333,15 +343,16 @@ def check_transaction(order):  #*****************************
 
     if platform == 'Ethereum':
         w3 = connect_to_eth()
-        transaction = w3.eth.get_transaction(order.tx_id)    #tx = w3.eth.get_transaction(eth_tx_id) return transactions
-        #********************* return lists or a transation ???
-        for tx in transaction:  #***************test
-            if (tx['platform']== order.sell_currency ) and (tx['amount'] == order.sell_amount):
+        transaction = w3.eth.get_transaction(order.tx_id)  # tx = w3.eth.get_transaction(eth_tx_id) return transactions
+        # ********************* return lists or a transation ???
+        for tx in transaction:  # ***************test
+            if (tx['platform'] == order.sell_currency) and (tx['amount'] == order.sell_amount) and tx['sender_pk']:
                 flag = True
 
     elif platform == 'Algorand':
         acl = connect_to_algo(connection_type="indexer")
-        transaction_list = acl.search_transactions(order.tx_id)  #return a list of transactions satisfying the conditions
+        transaction_list = acl.search_transactions(
+            order.tx_id)  # return a list of transactions satisfying the conditions
         for tx in transaction_list:
             if (tx['platform'] == order.sell_currency) and (tx['amount'] == order.sell_amount):
                 flag = True
@@ -374,40 +385,38 @@ def execute_txes(txes):
     for eth_tx in eth_txes:
         w3 = connect_to_eth()
         tx_ids = send_tokens_eth(w3, eth_sk, eth_tx)  # Send tokens on the eth testnets
-        #print(tx_ids)
+        # print(tx_ids)
 
-        for txid in tx_ids: #*******************
+        for txid in tx_ids:  # *******************
             tx_object = TX()
             tx_object.platform = eth_tx['platform']
             tx_object.receiver_pk = eth_tx['receiver_pk']  ##******************
             tx_object.order_id = eth_tx['order_id']
-            tx_object.tx_id = txid  #txid is transaction id or tx_id??????????????????************
+            tx_object.tx_id = txid  # txid is transaction id or tx_id??????????????????************
             # add it to the TX table
             g.session.add(tx_object)
             g.session.commit()
 
-
     for algo_tx in algo_txes:
-        acl = connect_to_algo(connection_type='') # ************************
+        acl = connect_to_algo(connection_type='')  # ************************
         # Send tokens on the Algorand testnets, return a list of transaction id's
-        tx_ids = send_tokens_algo( acl, algo_sk, algo_tx)
+        tx_ids = send_tokens_algo(acl, algo_sk, algo_tx)
 
         for txid in tx_ids:
             tx_object = TX()
             tx_object.platform = algo_tx['platform']
             tx_object.receiver_pk = algo_tx['receiver_pk']
             tx_object.order_id = algo_tx['order_id']
-            tx_object.tx_id = txid      #txid is transaction id or tx_id??????????????????************
+            tx_object.tx_id = txid  # txid is transaction id or tx_id??????????????????************
             # add it to the TX table
             g.session.add(tx_object)
             g.session.commit()
 
-
     # Add all transactions to the TX table (see models.py) ************************
-    #When a transaction is successfully executed, i.e., when the exchange sends tokens to two counterparties
+    # When a transaction is successfully executed, i.e., when the exchange sends tokens to two counterparties
     # after matching an order, the exchange should record the following information in the transactions table
     # (the table ‘TX’).
-    #platform: either ‘Ethereum’ or ‘Algorand’
+    # platform: either ‘Ethereum’ or ‘Algorand’
     # receiver_pk: the address of the payee, i.e., the recipient of the tokens
     # order_id: the id of the order (in the Order table) that generated this transaction
     # tx_id: the transaction id of the payment transaction (from the Exchange) on the platform specified by platform
@@ -431,16 +440,16 @@ def address():
 
         if content['platform'] == "Ethereum":
             # Your code here
-            #get_eth_keys(filename="eth_mnemonic.txt")  #******************
+            # get_eth_keys(filename="eth_mnemonic.txt")  #******************
             eth_sk, eth_pk = get_eth_keys()
 
             return jsonify(eth_pk)
 
         if content['platform'] == "Algorand":
             # Your code here
-            algo_sk, algo_pk = get_algo_keys() #******************
+            algo_sk, algo_pk = get_algo_keys()  # ******************
 
-            #print(algo_pk)
+            # print(algo_pk)
             return jsonify(algo_pk)
 
 
@@ -448,10 +457,9 @@ def address():
 def trade():
     print("In trade", file=sys.stderr)
     connect_to_blockchains()
-    #get_keys()           #************************** replace it with other two helper functions
+    # get_keys()           #************************** replace it with other two helper functions
     # get_keys was a function from our solution ????
     # but you'll have to write your own method to get_keys for each platform per the instructions.
-
 
     if request.method == "POST":
         content = request.get_json(silent=True)
@@ -490,7 +498,7 @@ def trade():
             new_order = store_order(content)  # 2. Add the order to the table
             # 3a. Check if the order is backed by a transaction equal to the sell_amount (this is new)
             # ******************
-            if check_transaction(new_order): #********************
+            if check_transaction(new_order):  # ********************
 
                 txes = order_fill(new_order)  # 3b. Fill the order (as in Exchange Server II) if the order is valid
                 execute_txes(txes)  # 4. Execute the transactions  #******************
