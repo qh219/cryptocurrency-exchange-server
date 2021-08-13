@@ -15,13 +15,17 @@ def generate_eth_keys():
     # generate key-pairs for Ethereum
     w3 = connect_to_eth()
     w3.eth.account.enable_unaudited_hdwallet_features()
-    #acct, mnemonic_secret = w3.eth.account.create_with_mnemonic()  *****************8
+    #acct, mnemonic_secret = w3.eth.account.create_with_mnemonic()  *****************
+    # acct = w3.eth.account.from_mnemonic(mnemonic_secret)
+    # eth_pk = acct._address
+    # eth_sk = acct._private_key
+
     # save Ethereum account information
 
     mnemonic_secret = "village token veteran"
-    acct = w3.eth.account.from_mnemonic(mnemonic_secret)
-    eth_pk = acct._address
-    eth_sk = acct._private_key
+    eth_sk = mnemonic.to_private_key(mnemonic_secret)
+    eth_pk = mnemonic.to_public_key(mnemonic_secret)
+
     return eth_sk, eth_pk
 
 
