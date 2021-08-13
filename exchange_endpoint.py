@@ -346,7 +346,8 @@ def check_transaction(order):  # *****************************
         transaction = w3.eth.get_transaction(order.tx_id)  # tx = w3.eth.get_transaction(eth_tx_id) return transactions
         # ********************* return lists or a transation ???
         for tx in transaction:  # ***************test
-            if (tx['platform'] == order.sell_currency) and (tx['amount'] == order.sell_amount) and tx['sender_pk']:
+            #if (tx['platform'] == order.sell_currency) and (tx['amount'] == order.sell_amount) and tx['sender_pk']:
+            if (tx['platform'] == order.sell_currency) and (tx['amount'] == order.sell_amount):
                 flag = True
 
     elif platform == 'Algorand':
