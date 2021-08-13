@@ -374,7 +374,7 @@ def execute_txes(txes):
     for eth_tx in eth_txes:
         w3 = connect_to_eth()
         tx_ids = send_tokens_eth(w3, eth_sk, eth_tx)  # Send tokens on the eth testnets
-        print(tx_ids)
+        #print(tx_ids)
 
         for txid in tx_ids: #*******************
             tx_object = TX()
