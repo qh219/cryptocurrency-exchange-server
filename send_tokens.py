@@ -32,6 +32,9 @@ def connect_to_algo(connection_type=''):
 
 
 def send_tokens_algo(acl, sender_sk, txes):
+
+    print("------ enter send_tokens_algo -------- ")
+
     params = acl.suggested_params #********************
 
     # TODO: You might want to adjust the first/last valid rounds in the suggested_params #**************
@@ -43,7 +46,12 @@ def send_tokens_algo(acl, sender_sk, txes):
 
     # TODO: Return a list of transaction id's
 
+    print("txes is as follows:")
+    print(txes)
+
     sender_pk = account.address_from_private_key(sender_sk)
+    print("sender_pk is ads follows:")
+    print(sender_pk)
 
     tx_ids = []
     for i, tx in enumerate(txes):
@@ -78,6 +86,8 @@ def send_tokens_algo(acl, sender_sk, txes):
         except Exception as e:
             print(e)
 
+    print("tx_ids list is " )
+    print(tx_ids)
     return tx_ids
     # return []
 
@@ -141,6 +151,9 @@ def wait_for_confirmation_eth(w3, tx_hash):
 
 ####################
 def send_tokens_eth(w3, sender_sk, txes):  # *******************************
+
+    print("------ enter send_tokens_eth -------- ")
+
     sender_account = w3.eth.account.privateKeyToAccount(sender_sk)
     sender_pk = sender_account._address
 

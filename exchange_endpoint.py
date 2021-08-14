@@ -10,6 +10,8 @@ from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm import load_only
 from datetime import datetime
 import math
+from algosdk.v2client import indexer
+
 import sys
 import traceback
 
@@ -178,14 +180,6 @@ def get_eth_keys(filename="eth_mnemonic.txt"):
     return eth_sk, eth_pk
 
 
-def fill_order(order, txes=[]):
-    # TODO: 
-    # Match orders (same as Exchange Server II)
-    # Validate the order has a payment to back it (make sure the counterparty also made a payment)
-    # Make sure that you end up executing all resulting transactions!
-
-    pass
-
 
 def order_fill(new_order):
     new_order_flag = True
@@ -255,7 +249,7 @@ def order_fill_detail(orderDict, numIter):
 
                 # *************************
 
-                #tx_dict = {'platform': existing_order.sell_currency, 'order_id': existing_order.id,
+                # tx_dict = {'platform': existing_order.sell_currency, 'order_id': existing_order.id,
                 #           'receiver_pk': existing_order.sender_pk, 'amount': existing_order.sell_amount}
 
                 new_amount = min(new_order.buy_amount, existing_order.sell_amount)
@@ -298,9 +292,9 @@ def order_fill_detail(orderDict, numIter):
                 g.session.commit()
 
                 ##############********************* Not nedd to add
-                #tx_dict = {'platform': new_order.sell_currency, 'order_id': new_order.id,
+                # tx_dict = {'platform': new_order.sell_currency, 'order_id': new_order.id,
                 #           'receiver_pk': new_order.sender_pk, 'amount': new_order.sell_amount}
-                #txes_dict_list.append(tx_dict)
+                # txes_dict_list.append(tx_dict)
 
             break
 
@@ -338,6 +332,8 @@ def check_transaction(order):  # *****************************
         4. The receiver of the transaction is the exchange server (i.e., the key specified by the ‘/address’ endpoint) *****
     """
 
+    print("--------------enter check_transaction()-----------------------")
+
     platform = order.sell_currency
     flag = False
 
@@ -345,18 +341,27 @@ def check_transaction(order):  # *****************************
         w3 = connect_to_eth()
         transaction = w3.eth.get_transaction(order.tx_id)  # tx = w3.eth.get_transaction(eth_tx_id) return transactions
         # ********************* return lists or a transation ???
-        for tx in transaction:  # ***************test
-            #if (tx['platform'] == order.sell_currency) and (tx['amount'] == order.sell_amount) and tx['sender_pk']:
-            if (tx['platform'] == order.sell_currency) and (tx['amount'] == order.sell_amount):
-                flag = True
+        #for tx in transaction:  # ***************test
+            # if (tx['platform'] == order.sell_currency) and (tx['amount'] == order.sell_amount) and tx['sender_pk']:
+            #if (tx['platform'] == order.sell_currency) and (tx['amount'] == order.sell_amount):
+                #flag = True
+
+        print("eth transation is ")
+        print(transaction)
+        if (transaction['platform'] == order.sell_currency) and (transaction['amount'] == order.sell_amount):
+            flag = True
 
     elif platform == 'Algorand':
         acl = connect_to_algo(connection_type="indexer")
         transaction_list = acl.search_transactions(
             order.tx_id)  # return a list of transactions satisfying the conditions
+        print("algo transation list is ")
+        print(transaction_list)
         for tx in transaction_list:
             if (tx['platform'] == order.sell_currency) and (tx['amount'] == order.sell_amount):
                 flag = True
+
+    print("--------------leave check_transaction()-----------------------")
 
     return flag
 
@@ -375,6 +380,8 @@ def execute_txes(txes):
         print("Error: execute_txes got an invalid platform!")
         print(tx['platform'] for tx in txes)
 
+    print("--------------enter execute_txes-----------------------")
+
     algo_txes = [tx for tx in txes if tx['platform'] == "Algorand"]
     eth_txes = [tx for tx in txes if tx['platform'] == "Ethereum"]
 
@@ -383,17 +390,27 @@ def execute_txes(txes):
     #          We've provided the send_tokens_algo and send_tokens_eth skeleton methods in send_tokens.py
     #       2. Add all transactions to the TX table (see models.py) EVERY ITERATION
 
+    print("--eth_txes list are--")
+    print(eth_txes)
+    print("--algo_txes list are--")
+    print(algo_txes)
+
     for eth_tx in eth_txes:
         w3 = connect_to_eth()
         tx_ids = send_tokens_eth(w3, eth_sk, eth_tx)  # Send tokens on the eth testnets
         # print(tx_ids)
+        print("--eth txids are--")
+        print(tx_ids)
 
         for txid in tx_ids:  # *******************
+            print("--txid is--")
+            print(txid)
+
             tx_object = TX()
             tx_object.platform = eth_tx['platform']
             tx_object.receiver_pk = eth_tx['receiver_pk']  ##******************
             tx_object.order_id = eth_tx['order_id']
-            tx_object.tx_id = txid  # txid is transaction id or tx_id??????????????????************
+            tx_object.tx_id = txid
             # add it to the TX table
             g.session.add(tx_object)
             g.session.commit()
@@ -403,7 +420,13 @@ def execute_txes(txes):
         # Send tokens on the Algorand testnets, return a list of transaction id's
         tx_ids = send_tokens_algo(acl, algo_sk, algo_tx)
 
+        print("--algo txids are--")
+        print(tx_ids)
+
         for txid in tx_ids:
+            print("--txid is--")
+            print(txid)
+
             tx_object = TX()
             tx_object.platform = algo_tx['platform']
             tx_object.receiver_pk = algo_tx['receiver_pk']
@@ -413,16 +436,7 @@ def execute_txes(txes):
             g.session.add(tx_object)
             g.session.commit()
 
-    # Add all transactions to the TX table (see models.py) ************************
-    # When a transaction is successfully executed, i.e., when the exchange sends tokens to two counterparties
-    # after matching an order, the exchange should record the following information in the transactions table
-    # (the table ‘TX’).
-    # platform: either ‘Ethereum’ or ‘Algorand’
-    # receiver_pk: the address of the payee, i.e., the recipient of the tokens
-    # order_id: the id of the order (in the Order table) that generated this transaction
-    # tx_id: the transaction id of the payment transaction (from the Exchange) on the platform specified by platform
-
-    # pass
+    print("--------------leave execute_txes -----------------------")
 
 
 """ End of Helper methods"""
@@ -430,6 +444,8 @@ def execute_txes(txes):
 
 @app.route('/address', methods=['POST'])
 def address():
+    print("--------------enter address()-----------------------")
+
     if request.method == "POST":
         content = request.get_json(silent=True)
         if 'platform' not in content.keys():
@@ -444,18 +460,26 @@ def address():
             # get_eth_keys(filename="eth_mnemonic.txt")  #******************
             eth_sk, eth_pk = get_eth_keys()
 
+            print("--- in address(), eth_pk is --")
+            print(eth_pk)
+
+            print("---------jsonify eth_pk, leave address()-------------")
             return jsonify(eth_pk)
 
         if content['platform'] == "Algorand":
             # Your code here
             algo_sk, algo_pk = get_algo_keys()  # ******************
+            print("--- in address(), algo_pk is --")
+            print(algo_pk)
 
-            # print(algo_pk)
+            print("---------jsonify eth_pk, leave address()-------------")
             return jsonify(algo_pk)
 
 
 @app.route('/trade', methods=['POST'])
 def trade():
+    print("--------------enter trade()----------------------")
+
     print("In trade", file=sys.stderr)
     connect_to_blockchains()
     # get_keys()           #************************** replace it with other two helper functions
@@ -500,16 +524,24 @@ def trade():
             # 3a. Check if the order is backed by a transaction equal to the sell_amount (this is new)
             # ******************
             if check_transaction(new_order):  # ********************
+                try:
+                    txes = order_fill(new_order)  # 3b. Fill the order (as in Exchange Server II) if the order is valid
+                    execute_txes(txes)  # 4. Execute the transactions  #******************
+                    print("------jsonify true, leave trade()----------------------")
+                    return jsonify(True)
 
-                txes = order_fill(new_order)  # 3b. Fill the order (as in Exchange Server II) if the order is valid
-                execute_txes(txes)  # 4. Execute the transactions  #******************
-                return jsonify(True)
+                except Exception as e:
+                    import traceback
+                    print(traceback.format_exc())
+                    print(e)
 
             log_message(content['payload'])
+            print("------jsonify false, leave trade()----------------------")
             return jsonify(False)
 
         else:
             log_message(content['payload'])
+            print("------jsonify false, leave trade()----------------------")
             return jsonify(False)
 
 
