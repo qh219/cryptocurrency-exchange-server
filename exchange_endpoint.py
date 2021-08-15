@@ -328,7 +328,7 @@ def check_transaction(order):
 
     return True
 
-def check_transaction2(order):  # *****************************
+def check_2(order):  # *****************************
     """When a user submits an order to the endpoint “/trade” the submission data should have a “tx_id” field.
     For valid orders, this will correspond to a transaction ID on the blockchain specified by “sell_currency.”
     In order to see if the order is valid, the exchange server must check that the specified transaction actually
