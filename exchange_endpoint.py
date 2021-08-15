@@ -296,7 +296,7 @@ def order_fill_detail(orderDict, numIter):
                 g.session.add(child_order)
                 g.session.commit()
 
-                ##############********************* Not nedd to add
+                ##############********************* 
                 # tx_dict = {'platform': new_order.sell_currency, 'order_id': new_order.id,
                 #           'receiver_pk': new_order.sender_pk, 'amount': new_order.sell_amount}
                 # txes_dict_list.append(tx_dict)
