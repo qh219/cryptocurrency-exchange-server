@@ -348,6 +348,9 @@ def check_transaction(order):  # *****************************
 
         print("eth transation is ")
         print(transaction)
+        print("type of the transaction is")
+        print(type(transaction))
+
         if (transaction['platform'] == order.sell_currency) and (transaction['amount'] == order.sell_amount):
             flag = True
 
@@ -355,8 +358,12 @@ def check_transaction(order):  # *****************************
         acl = connect_to_algo(connection_type="indexer")
         transaction_list = acl.search_transactions(
             order.tx_id)  # return a list of transactions satisfying the conditions
+
         print("algo transation list is ")
         print(transaction_list)
+        print("type of the transaction is")
+        print(type(transaction_list))
+
         for tx in transaction_list:
             if (tx['platform'] == order.sell_currency) and (tx['amount'] == order.sell_amount):
                 flag = True
@@ -367,6 +374,9 @@ def check_transaction(order):  # *****************************
 
 
 def execute_txes(txes):
+    
+    print("--------------enter execute_txes-----------------------")
+
     if txes is None:
         return True
     if len(txes) == 0:
@@ -380,7 +390,7 @@ def execute_txes(txes):
         print("Error: execute_txes got an invalid platform!")
         print(tx['platform'] for tx in txes)
 
-    print("--------------enter execute_txes-----------------------")
+
 
     algo_txes = [tx for tx in txes if tx['platform'] == "Algorand"]
     eth_txes = [tx for tx in txes if tx['platform'] == "Ethereum"]
