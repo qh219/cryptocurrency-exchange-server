@@ -182,6 +182,8 @@ def get_eth_keys(filename="eth_mnemonic.txt"):
 
 
 def order_fill(new_order):
+
+    print("----------- enter order_fill function ----------")
     new_order_flag = True
     numIter = 0
     transactions = []
@@ -192,6 +194,9 @@ def order_fill(new_order):
         transactions.extend(txes_dict_list)  # add a transaction list(i.e. txes) to transactions list
         numIter = numIter + 1
 
+    print("transactions list are-----")
+    print(transactions)
+    print("----------- leave order_fill function ----------")
     return transactions
 
 
@@ -319,8 +324,11 @@ def match_orders(existing_order, new_order):
     else:
         return False
 
+def check_transaction(order):
 
-def check_transaction(order):  # *****************************
+    return True
+
+def check_transaction2(order):  # *****************************
     """When a user submits an order to the endpoint “/trade” the submission data should have a “tx_id” field.
     For valid orders, this will correspond to a transaction ID on the blockchain specified by “sell_currency.”
     In order to see if the order is valid, the exchange server must check that the specified transaction actually
@@ -374,7 +382,7 @@ def check_transaction(order):  # *****************************
 
 
 def execute_txes(txes):
-    
+
     print("--------------enter execute_txes-----------------------")
 
     if txes is None:
