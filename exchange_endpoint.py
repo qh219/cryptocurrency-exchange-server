@@ -186,6 +186,7 @@ def tx_object_create(tx_dict):
     tx_object.platform = tx_dict['platform']
     tx_object.receiver_pk = tx_dict['receiver_pk']
     tx_object.order_id = tx_dict['order_id']
+    tx_object.tx_id = tx_dict['tx_id']
     # add it to the TX table
     g.session.add(tx_object)
     g.session.commit()
@@ -272,9 +273,11 @@ def order_fill_detail(orderDict, numIter):
                 ex_amount = min(existing_order.buy_amount, new_order.sell_amount)
 
                 tx_dict = {'platform': existing_order.buy_currency, 'order_id': existing_order.id,
-                           'receiver_pk': existing_order.receiver_pk, 'amount': ex_amount}
+                           'receiver_pk': existing_order.receiver_pk, 'amount': ex_amount,
+                           'tx_id': existing_order.tx_id}
                 tx_dict2 = {'platform': new_order.buy_currency, 'order_id': new_order.id,
-                            'receiver_pk': new_order.receiver_pk, 'amount': new_amount}
+                            'receiver_pk': new_order.receiver_pk, 'amount': new_amount,
+                            'tx_id': new_order.tx_id}
 
                 txes_dict_list.append(tx_dict)
                 txes_dict_list.append(tx_dict2)
@@ -288,9 +291,11 @@ def order_fill_detail(orderDict, numIter):
                 # order_id: the id of the order (in the Order table) that generated this transaction??????
                 # *************************
                 tx_dict = {'platform': existing_order.buy_currency, 'order_id': existing_order.id,
-                           'receiver_pk': existing_order.receiver_pk, 'amount': existing_order.sell_amount}
+                           'receiver_pk': existing_order.receiver_pk, 'amount': existing_order.sell_amount,
+                           'tx_id': existing_order.tx_id}
                 tx_dict2 = {'platform': new_order.buy_currency, 'order_id': new_order.id,
-                            'receiver_pk': new_order.receiver_pk, 'amount': new_order.buy_amount}
+                            'receiver_pk': new_order.receiver_pk, 'amount': new_order.buy_amount,
+                            'tx_id': new_order.tx_id}
 
                 txes_dict_list.append(tx_dict)
                 txes_dict_list.append(tx_dict2)
@@ -609,10 +614,9 @@ def trade():
             if check_transaction(new_order):  # ********************
                 try:
                     txes = order_fill(new_order)  # 3b. Fill the order (as in Exchange Server II) if the order is valid
-                    if txes != []:
-                        execute_txes(txes)  # 4. Execute the transactions  #******************
-                        print("------jsonify true, leave trade()----------------------")
-                        return jsonify(True)
+                    execute_txes(txes)  # 4. Execute the transactions  #******************
+                    print("------jsonify true, leave trade()----------------------")
+                    return jsonify(True)
 
                 except Exception as e:
                     import traceback
