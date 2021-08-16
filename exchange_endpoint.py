@@ -191,6 +191,7 @@ def order_fill(new_order):
     child_order_dict = new_order
     while new_order_flag:
         child_order_dict, new_order_flag, txes_dict_list = order_fill_detail(child_order_dict, numIter)
+        print("----txes_dict_list is ----")
         transactions.extend(txes_dict_list)  # add a transaction list(i.e. txes) to transactions list
         numIter = numIter + 1
 
@@ -297,13 +298,22 @@ def order_fill_detail(orderDict, numIter):
                 g.session.commit()
 
                 ##############********************* 
-                # tx_dict = {'platform': new_order.sell_currency, 'order_id': new_order.id,
-                #           'receiver_pk': new_order.sender_pk, 'amount': new_order.sell_amount}
-                # txes_dict_list.append(tx_dict)
+                ex_amount = min(new_order.buy_amount, existing_order.sell_amount)
+                new_amount = min(existing_order.buy_amount, new_order.sell_amount)
+
+                tx_dict = {'platform': existing_order.buy_currency, 'order_id': existing_order.id,
+                           'receiver_pk': existing_order.receiver_pk, 'amount': ex_amount}
+                tx_dict2 = {'platform': new_order.buy_currency, 'order_id': new_order.id,
+                            'receiver_pk': new_order.receiver_pk, 'amount': new_amount}
+
+                txes_dict_list.append(tx_dict)
+                txes_dict_list.append(tx_dict2)
 
             break
 
     # *************************
+    print("---in order_fill_detail(), txes_dict_list is ---")
+    print(txes_dict_list)
     return child_order_dict, new_order_flag, txes_dict_list
 
 
@@ -413,46 +423,86 @@ def execute_txes(txes):
     print("--algo_txes list are--")
     print(algo_txes)
 
-    for eth_tx in eth_txes:
-        w3 = connect_to_eth()
-        tx_ids = send_tokens_eth(w3, eth_sk, eth_tx)  # Send tokens on the eth testnets
+    #for eth_tx in eth_txes:
+        #w3 = connect_to_eth()
+        #tx_ids = send_tokens_eth(w3, eth_sk, eth_tx)  # Send tokens on the eth testnets
         # print(tx_ids)
-        print("--eth txids are--")
-        print(tx_ids)
+        #print("--eth txids are--")
+        #print(tx_ids)
+        #for txid in tx_ids:  # *******************
+            #print("--txid is--")
+            #print(txid)
 
-        for txid in tx_ids:  # *******************
-            print("--txid is--")
-            print(txid)
-
-            tx_object = TX()
-            tx_object.platform = eth_tx['platform']
-            tx_object.receiver_pk = eth_tx['receiver_pk']  ##******************
-            tx_object.order_id = eth_tx['order_id']
-            tx_object.tx_id = txid
+            #tx_object = TX()
+            #tx_object.platform = eth_tx['platform']
+            #tx_object.receiver_pk = eth_tx['receiver_pk']  ##******************
+            #tx_object.order_id = eth_tx['order_id']
+            #tx_object.tx_id = txid
             # add it to the TX table
-            g.session.add(tx_object)
-            g.session.commit()
+            #g.session.add(tx_object)
+            #g.session.commit()
 
-    for algo_tx in algo_txes:
-        acl = connect_to_algo(connection_type='')  # ************************
+    w3 = connect_to_eth()
+    txid_txdict_list = send_tokens_eth(w3, eth_sk, eth_txes)  # return a list [[txid1, tx_dictionary1], [txid2, tx_dict2],...]
+    print("--send_tokens_eth return a list [[txid1, tx_dictionary1], ...]--")
+    print(txid_txdict_list)
+
+    for one_txid_txdict in txid_txdict_list:  # *******************
+        print("--one_txid_txdict_list should look like [txid1, tx_dictionary1], which actual looks like --")
+        print(one_txid_txdict)
+
+        tx_object = TX()
+        eth_tx = one_txid_txdict[1]
+        txid = one_txid_txdict[0]
+        tx_object.platform = eth_tx['platform']
+        tx_object.receiver_pk = eth_tx['receiver_pk']  ##******************
+        tx_object.order_id = eth_tx['order_id']
+        tx_object.tx_id = txid
+        # add it to the TX table
+        g.session.add(tx_object)
+        g.session.commit()
+
+    acl = connect_to_algo(connection_type='')
+    txid_txdict_list2 = send_tokens_algo(acl, algo_sk, algo_txes)
+    print("--send_tokens_algo return a list [[txid1, tx_dictionary1], ...]--")
+    print(txid_txdict_list2)
+
+    for one_txid_txdict2 in txid_txdict_list2:
+        print("--one_txid_txdict_list should look like [txid1, tx_dictionary1], which actual looks like --")
+        print(one_txid_txdict2)
+
+        tx_object2 = TX()
+        algo_tx = one_txid_txdict2[1]
+        txid2 = one_txid_txdict2[0]
+        tx_object2.platform = algo_tx['platform']
+        tx_object2.receiver_pk = algo_tx['receiver_pk']
+        tx_object2.order_id = algo_tx['order_id']
+        tx_object2.tx_id = txid2
+        # add it to the TX table
+        g.session.add(tx_object2)
+        g.session.commit()
+
+
+    #for algo_tx in algo_txes:
+        #acl = connect_to_algo(connection_type='')  # ************************
         # Send tokens on the Algorand testnets, return a list of transaction id's
-        tx_ids = send_tokens_algo(acl, algo_sk, algo_tx)
+        #tx_ids = send_tokens_algo(acl, algo_sk, algo_tx)
 
-        print("--algo txids are--")
-        print(tx_ids)
+        #print("--algo txids are--")
+        #print(tx_ids)
 
-        for txid in tx_ids:
-            print("--txid is--")
-            print(txid)
+        #for txid in tx_ids:
+            #print("--txid is--")
+            #print(txid)
 
-            tx_object = TX()
-            tx_object.platform = algo_tx['platform']
-            tx_object.receiver_pk = algo_tx['receiver_pk']
-            tx_object.order_id = algo_tx['order_id']
-            tx_object.tx_id = txid  # txid is transaction id or tx_id??????????????????************
+            #tx_object = TX()
+            #tx_object.platform = algo_tx['platform']
+            #tx_object.receiver_pk = algo_tx['receiver_pk']
+            #tx_object.order_id = algo_tx['order_id']
+            #tx_object.tx_id = txid  # txid is transaction id or tx_id??????????????????************
             # add it to the TX table
-            g.session.add(tx_object)
-            g.session.commit()
+            #g.session.add(tx_object)
+            #g.session.commit()
 
     print("--------------leave execute_txes -----------------------")
 

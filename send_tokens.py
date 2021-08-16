@@ -80,14 +80,22 @@ def send_tokens_algo(acl, sender_sk, txes):
             acl.send_transaction(signed_tx)
             tx_id = signed_tx.transaction.get_txid()
             txinfo = wait_for_confirmation_algo(acl, txid=tx_id)  #***************
-            tx_ids.append(tx_id)
+
+            txid_txdict_list = [tx_id, tx]
+            print("---inside tx_ids, each content is a list: [txid, tx_dictionary]---")
+            print(txid_txdict_list)
+
+            tx_ids.append(txid_txdict_list)
 
             print(f"Sent {tx['amount']} microalgo in transaction: {tx_id}\n")
         except Exception as e:
             print(e)
 
-    print("tx_ids list is " )
+    print("----send_tokens_algo return a list as follows -------" )
     print(tx_ids)
+
+    print("------ leave send_tokens_algo -------- ")
+
     return tx_ids
     # return []
 
@@ -172,6 +180,8 @@ def send_tokens_eth(w3, sender_sk, txes):  # *******************************
         #    'value': tx.amount,
         #    'data': b''}
 
+        print(tx)
+        print(type(tx))
         tx_dict = {
             'nonce': starting_nonce + i,  # Locally update nonce
             'gasPrice': w3.eth.gas_price,
@@ -181,6 +191,15 @@ def send_tokens_eth(w3, sender_sk, txes):  # *******************************
             'data': b''}
         signed_txn = w3.eth.account.sign_transaction(tx_dict, sender_sk)
         tx_id = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        tx_ids.append(tx_id)
+        txid_txdict_list = [tx_id, tx]
+
+        print("---inside tx_ids, each content is a list: [txid, tx_dictionary]---")
+        print(txid_txdict_list)
+        #tx_ids.append(tx_id)
+        tx_ids.append(txid_txdict_list)
+
+    print("----send_tokens_eth return a list as follows -------")
+    print(tx_ids)
+    print("---------- leave send_tokens_eth --------")
 
     return tx_ids
