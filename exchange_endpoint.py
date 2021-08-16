@@ -358,26 +358,17 @@ def match_orders(existing_order, new_order):
         return False
 
 
-def check_transaction(order):
-    return True
+#def check_transaction(order):
+    #return True
 
 
-def check_2(order):  # *****************************
-    """When a user submits an order to the endpoint “/trade” the submission data should have a “tx_id” field.
-    For valid orders, this will correspond to a transaction ID on the blockchain specified by “sell_currency.”
-    In order to see if the order is valid, the exchange server must check that the specified transaction actually
-    transferred “sell_amount” to the exchange’s address.
-    the “/trade” endpoint should take an additional field “tx_id” which specifies the transaction ID (sometimes called the transaction hash) of the transaction that deposited tokens to the exchange. In particular, before filling an order, you must check
-        1. The transaction specified by tx_id is a valid transaction on the platform specified by ‘sell_currency’
-        2. The amount of the transaction is ‘sell_amount’
-        3. The sender of the transaction is ‘sender_pk’   ****************************???????
-        4. The receiver of the transaction is the exchange server (i.e., the key specified by the ‘/address’ endpoint) *****
-    """
+def check_transaction(order):  # *****************************
 
     print("--------------enter check_transaction()-----------------------")
 
     platform = order.sell_currency
-    flag = False
+    #flag = False
+    flag = True
 
     if platform == 'Ethereum':
         w3 = connect_to_eth()
@@ -393,8 +384,8 @@ def check_2(order):  # *****************************
         print("type of the transaction is")
         print(type(transaction))
 
-        if (transaction['platform'] == order.sell_currency) and (transaction['amount'] == order.sell_amount):
-            flag = True
+        #if (transaction['platform'] == order.sell_currency) and (transaction['amount'] == order.sell_amount):
+            #flag = True
 
     elif platform == 'Algorand':
         acl = connect_to_algo(connection_type="indexer")
@@ -406,9 +397,9 @@ def check_2(order):  # *****************************
         print("type of the transaction is")
         print(type(transaction_list))
 
-        for tx in transaction_list:
-            if (tx['platform'] == order.sell_currency) and (tx['amount'] == order.sell_amount):
-                flag = True
+        #for tx in transaction_list:
+            #if (tx['platform'] == order.sell_currency) and (tx['amount'] == order.sell_amount):
+                #flag = True
 
     print("--------------leave check_transaction()-----------------------")
 
