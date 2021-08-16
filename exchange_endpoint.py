@@ -223,6 +223,7 @@ def order_fill_detail(orderDict, numIter):
     if numIter < 1:
         new_order = orderDict  # order obj
     else:
+        print(orderDict)
         new_order = Order(sender_pk=orderDict['sender_pk'], receiver_pk=orderDict['receiver_pk'],
                           buy_currency=orderDict['buy_currency'], sell_currency=orderDict['sell_currency'],
                           buy_amount=orderDict['buy_amount'], sell_amount=orderDict['sell_amount'],
@@ -606,6 +607,7 @@ def trade():
         # 4. Execute the transactions
         # If all goes well, return jsonify(True). else return jsonify(False)
 
+        print(content)
         signature_check_flag = check_sig(content)  # 1. Check the signature
 
         if signature_check_flag:
