@@ -35,7 +35,7 @@ def send_tokens_algo(acl, sender_sk, txes):
 
     print("------ enter send_tokens_algo -------- ")
 
-    params = acl.suggested_params #********************
+    params = acl.suggested_params() #********************
 
     # TODO: You might want to adjust the first/last valid rounds in the suggested_params #**************
     #       See guide for details

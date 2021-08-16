@@ -298,16 +298,16 @@ def order_fill_detail(orderDict, numIter):
                 g.session.commit()
 
                 ##############********************* 
-                ex_amount = min(new_order.buy_amount, existing_order.sell_amount)
-                new_amount = min(existing_order.buy_amount, new_order.sell_amount)
+                #ex_amount = min(new_order.buy_amount, existing_order.sell_amount)
+                #new_amount = min(existing_order.buy_amount, new_order.sell_amount)
 
-                tx_dict = {'platform': existing_order.buy_currency, 'order_id': existing_order.id,
-                           'receiver_pk': existing_order.receiver_pk, 'amount': ex_amount}
-                tx_dict2 = {'platform': new_order.buy_currency, 'order_id': new_order.id,
-                            'receiver_pk': new_order.receiver_pk, 'amount': new_amount}
+                #tx_dict = {'platform': existing_order.buy_currency, 'order_id': existing_order.id,
+                           #'receiver_pk': existing_order.receiver_pk, 'amount': ex_amount}
+                #tx_dict2 = {'platform': new_order.buy_currency, 'order_id': new_order.id,
+                            #'receiver_pk': new_order.receiver_pk, 'amount': new_amount}
 
-                txes_dict_list.append(tx_dict)
-                txes_dict_list.append(tx_dict2)
+                #txes_dict_list.append(tx_dict)
+                #txes_dict_list.append(tx_dict2)
 
             break
 
