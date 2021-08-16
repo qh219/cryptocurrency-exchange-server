@@ -361,11 +361,11 @@ def match_orders(existing_order, new_order):
         return False
 
 
-#def check_transaction(order):
-    #return True
+def check_transaction(order):
+    return True
 
 
-def check_transaction(order):  # *****************************
+def chec_2(order):  # *****************************
 
     print("--------------enter check_transaction()-----------------------")
 
@@ -392,8 +392,7 @@ def check_transaction(order):  # *****************************
 
     elif platform == 'Algorand':
         acl = connect_to_algo(connection_type="indexer")
-        transaction_list = acl.search_transactions(
-            order.tx_id)  # return a list of transactions satisfying the conditions
+        transaction_list = acl.search_transactions(order.tx_id)  # return a list of transactions satisfying the conditions
 
         print("algo transation list is ")
         print(transaction_list)
