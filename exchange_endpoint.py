@@ -8,9 +8,10 @@ import algosdk
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm import load_only
-from datetime import datetime
+from datetime import datetime, time
 import math
 from algosdk.v2client import indexer
+import time
 
 import sys
 import traceback
@@ -180,9 +181,18 @@ def get_eth_keys(filename="eth_mnemonic.txt"):
     return eth_sk, eth_pk
 
 
+def tx_object_create(tx_dict):
+    tx_object = TX()
+    tx_object.platform = tx_dict['platform']
+    tx_object.receiver_pk = tx_dict['receiver_pk']
+    tx_object.order_id = tx_dict['order_id']
+    # add it to the TX table
+    g.session.add(tx_object)
+    g.session.commit()
+
 
 def order_fill(new_order):
-
+    time.sleep(1)
     print("----------- enter order_fill function ----------")
     new_order_flag = True
     numIter = 0
@@ -215,7 +225,7 @@ def order_fill_detail(orderDict, numIter):
         new_order = Order(sender_pk=orderDict['sender_pk'], receiver_pk=orderDict['receiver_pk'],
                           buy_currency=orderDict['buy_currency'], sell_currency=orderDict['sell_currency'],
                           buy_amount=orderDict['buy_amount'], sell_amount=orderDict['sell_amount'],
-                          creator_id=orderDict['creator_id'])
+                          creator_id=orderDict['creator_id'], tx_id=orderDict['tx_id'])
         g.session.add(new_order)
         g.session.commit()
 
@@ -269,6 +279,9 @@ def order_fill_detail(orderDict, numIter):
                 txes_dict_list.append(tx_dict)
                 txes_dict_list.append(tx_dict2)
 
+                tx_object_create(tx_dict)  # *****************8
+                tx_object_create(tx_dict2)
+
             else:
                 g.session.commit()
 
@@ -281,6 +294,9 @@ def order_fill_detail(orderDict, numIter):
 
                 txes_dict_list.append(tx_dict)
                 txes_dict_list.append(tx_dict2)
+
+                tx_object_create(tx_dict)  # *****************8
+                tx_object_create(tx_dict2)
 
             if new_order.sell_amount < existing_order.buy_amount:
                 remained_difference = existing_order.buy_amount - new_order.sell_amount
@@ -298,16 +314,16 @@ def order_fill_detail(orderDict, numIter):
                 g.session.commit()
 
                 ##############********************* 
-                #ex_amount = min(new_order.buy_amount, existing_order.sell_amount)
-                #new_amount = min(existing_order.buy_amount, new_order.sell_amount)
+                # ex_amount = min(new_order.buy_amount, existing_order.sell_amount)
+                # new_amount = min(existing_order.buy_amount, new_order.sell_amount)
 
-                #tx_dict = {'platform': existing_order.buy_currency, 'order_id': existing_order.id,
-                           #'receiver_pk': existing_order.receiver_pk, 'amount': ex_amount}
-                #tx_dict2 = {'platform': new_order.buy_currency, 'order_id': new_order.id,
-                            #'receiver_pk': new_order.receiver_pk, 'amount': new_amount}
+                # tx_dict = {'platform': existing_order.buy_currency, 'order_id': existing_order.id,
+                # 'receiver_pk': existing_order.receiver_pk, 'amount': ex_amount}
+                # tx_dict2 = {'platform': new_order.buy_currency, 'order_id': new_order.id,
+                # 'receiver_pk': new_order.receiver_pk, 'amount': new_amount}
 
-                #txes_dict_list.append(tx_dict)
-                #txes_dict_list.append(tx_dict2)
+                # txes_dict_list.append(tx_dict)
+                # txes_dict_list.append(tx_dict2)
 
             break
 
@@ -334,9 +350,10 @@ def match_orders(existing_order, new_order):
     else:
         return False
 
-def check_transaction(order):
 
+def check_transaction(order):
     return True
+
 
 def check_2(order):  # *****************************
     """When a user submits an order to the endpoint “/trade” the submission data should have a “tx_id” field.
@@ -359,10 +376,10 @@ def check_2(order):  # *****************************
         w3 = connect_to_eth()
         transaction = w3.eth.get_transaction(order.tx_id)  # tx = w3.eth.get_transaction(eth_tx_id) return transactions
         # ********************* return lists or a transation ???
-        #for tx in transaction:  # ***************test
-            # if (tx['platform'] == order.sell_currency) and (tx['amount'] == order.sell_amount) and tx['sender_pk']:
-            #if (tx['platform'] == order.sell_currency) and (tx['amount'] == order.sell_amount):
-                #flag = True
+        # for tx in transaction:  # ***************test
+        # if (tx['platform'] == order.sell_currency) and (tx['amount'] == order.sell_amount) and tx['sender_pk']:
+        # if (tx['platform'] == order.sell_currency) and (tx['amount'] == order.sell_amount):
+        # flag = True
 
         print("eth transation is ")
         print(transaction)
@@ -392,7 +409,7 @@ def check_2(order):  # *****************************
 
 
 def execute_txes(txes):
-
+    time.sleep(1)
     print("--------------enter execute_txes-----------------------")
 
     if txes is None:
@@ -408,8 +425,6 @@ def execute_txes(txes):
         print("Error: execute_txes got an invalid platform!")
         print(tx['platform'] for tx in txes)
 
-
-
     algo_txes = [tx for tx in txes if tx['platform'] == "Algorand"]
     eth_txes = [tx for tx in txes if tx['platform'] == "Ethereum"]
 
@@ -423,27 +438,28 @@ def execute_txes(txes):
     print("--algo_txes list are--")
     print(algo_txes)
 
-    #for eth_tx in eth_txes:
-        #w3 = connect_to_eth()
-        #tx_ids = send_tokens_eth(w3, eth_sk, eth_tx)  # Send tokens on the eth testnets
-        # print(tx_ids)
-        #print("--eth txids are--")
-        #print(tx_ids)
-        #for txid in tx_ids:  # *******************
-            #print("--txid is--")
-            #print(txid)
+    # for eth_tx in eth_txes:
+    # w3 = connect_to_eth()
+    # tx_ids = send_tokens_eth(w3, eth_sk, eth_tx)  # Send tokens on the eth testnets
+    # print(tx_ids)
+    # print("--eth txids are--")
+    # print(tx_ids)
+    # for txid in tx_ids:  # *******************
+    # print("--txid is--")
+    # print(txid)
 
-            #tx_object = TX()
-            #tx_object.platform = eth_tx['platform']
-            #tx_object.receiver_pk = eth_tx['receiver_pk']  ##******************
-            #tx_object.order_id = eth_tx['order_id']
-            #tx_object.tx_id = txid
-            # add it to the TX table
-            #g.session.add(tx_object)
-            #g.session.commit()
+    # tx_object = TX()
+    # tx_object.platform = eth_tx['platform']
+    # tx_object.receiver_pk = eth_tx['receiver_pk']  ##******************
+    # tx_object.order_id = eth_tx['order_id']
+    # tx_object.tx_id = txid
+    # add it to the TX table
+    # g.session.add(tx_object)
+    # g.session.commit()
 
     w3 = connect_to_eth()
-    txid_txdict_list = send_tokens_eth(w3, eth_sk, eth_txes)  # return a list [[txid1, tx_dictionary1], [txid2, tx_dict2],...]
+    txid_txdict_list = send_tokens_eth(w3, eth_sk,
+                                       eth_txes)  # return a list [[txid1, tx_dictionary1], [txid2, tx_dict2],...]
     print("--send_tokens_eth return a list [[txid1, tx_dictionary1], ...]--")
     print(txid_txdict_list)
 
@@ -482,27 +498,26 @@ def execute_txes(txes):
         g.session.add(tx_object2)
         g.session.commit()
 
+    # for algo_tx in algo_txes:
+    # acl = connect_to_algo(connection_type='')  # ************************
+    # Send tokens on the Algorand testnets, return a list of transaction id's
+    # tx_ids = send_tokens_algo(acl, algo_sk, algo_tx)
 
-    #for algo_tx in algo_txes:
-        #acl = connect_to_algo(connection_type='')  # ************************
-        # Send tokens on the Algorand testnets, return a list of transaction id's
-        #tx_ids = send_tokens_algo(acl, algo_sk, algo_tx)
+    # print("--algo txids are--")
+    # print(tx_ids)
 
-        #print("--algo txids are--")
-        #print(tx_ids)
+    # for txid in tx_ids:
+    # print("--txid is--")
+    # print(txid)
 
-        #for txid in tx_ids:
-            #print("--txid is--")
-            #print(txid)
-
-            #tx_object = TX()
-            #tx_object.platform = algo_tx['platform']
-            #tx_object.receiver_pk = algo_tx['receiver_pk']
-            #tx_object.order_id = algo_tx['order_id']
-            #tx_object.tx_id = txid  # txid is transaction id or tx_id??????????????????************
-            # add it to the TX table
-            #g.session.add(tx_object)
-            #g.session.commit()
+    # tx_object = TX()
+    # tx_object.platform = algo_tx['platform']
+    # tx_object.receiver_pk = algo_tx['receiver_pk']
+    # tx_object.order_id = algo_tx['order_id']
+    # tx_object.tx_id = txid  # txid is transaction id or tx_id??????????????????************
+    # add it to the TX table
+    # g.session.add(tx_object)
+    # g.session.commit()
 
     print("--------------leave execute_txes -----------------------")
 
