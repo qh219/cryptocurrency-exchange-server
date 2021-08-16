@@ -186,6 +186,7 @@ def tx_object_create(tx_dict):
     tx_object.platform = tx_dict['platform']
     tx_object.receiver_pk = tx_dict['receiver_pk']
     tx_object.order_id = tx_dict['order_id']
+    tx_object.tx_id = tx_dict['tx_id']
     # add it to the TX table
     g.session.add(tx_object)
     g.session.commit()
@@ -225,7 +226,7 @@ def order_fill_detail(orderDict, numIter):
         new_order = Order(sender_pk=orderDict['sender_pk'], receiver_pk=orderDict['receiver_pk'],
                           buy_currency=orderDict['buy_currency'], sell_currency=orderDict['sell_currency'],
                           buy_amount=orderDict['buy_amount'], sell_amount=orderDict['sell_amount'],
-                          creator_id=orderDict['creator_id'])
+                          creator_id=orderDict['creator_id'], tx_id=orderDict['tx_id'])
         g.session.add(new_order)
         g.session.commit()
 
@@ -272,9 +273,11 @@ def order_fill_detail(orderDict, numIter):
                 ex_amount = min(existing_order.buy_amount, new_order.sell_amount)
 
                 tx_dict = {'platform': existing_order.buy_currency, 'order_id': existing_order.id,
-                           'receiver_pk': existing_order.receiver_pk, 'amount': ex_amount}
+                           'receiver_pk': existing_order.receiver_pk, 'amount': ex_amount,
+                           'tx_id': existing_order.tx_id}
                 tx_dict2 = {'platform': new_order.buy_currency, 'order_id': new_order.id,
-                            'receiver_pk': new_order.receiver_pk, 'amount': new_amount}
+                            'receiver_pk': new_order.receiver_pk, 'amount': new_amount,
+                            'tx_id': new_order.tx_id}
 
                 txes_dict_list.append(tx_dict)
                 txes_dict_list.append(tx_dict2)
