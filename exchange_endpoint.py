@@ -609,9 +609,10 @@ def trade():
             if check_transaction(new_order):  # ********************
                 try:
                     txes = order_fill(new_order)  # 3b. Fill the order (as in Exchange Server II) if the order is valid
-                    execute_txes(txes)  # 4. Execute the transactions  #******************
-                    print("------jsonify true, leave trade()----------------------")
-                    return jsonify(True)
+                    if txes != []:
+                        execute_txes(txes)  # 4. Execute the transactions  #******************
+                        print("------jsonify true, leave trade()----------------------")
+                        return jsonify(True)
 
                 except Exception as e:
                     import traceback
