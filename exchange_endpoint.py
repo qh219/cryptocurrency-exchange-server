@@ -458,10 +458,7 @@ def execute_txes(txes):
     # g.session.commit()
 
     w3 = connect_to_eth()
-    #txid_txdict_list = send_tokens_eth(w3, eth_sk, eth_txes)  # return a list [[txid1, tx_dictionary1], [txid2, tx_dict2],...]
-
-    txid_txdict_list = send_tokens_eth(w3, eth_sk, algo_txes)
-
+    txid_txdict_list = send_tokens_eth(w3, eth_sk, eth_txes)  # return a list [[txid1, tx_dictionary1], [txid2, tx_dict2],...]
     print("--send_tokens_eth return a list [[txid1, tx_dictionary1], ...]--")
     print(txid_txdict_list)
 
@@ -481,10 +478,7 @@ def execute_txes(txes):
         g.session.commit()
 
     acl = connect_to_algo(connection_type='')
-    #txid_txdict_list2 = send_tokens_algo(acl, algo_sk, algo_txes)
-
-    txid_txdict_list2 = send_tokens_algo(acl, algo_sk, eth_txes)
-
+    txid_txdict_list2 = send_tokens_algo(acl, algo_sk, algo_txes)
     print("--send_tokens_algo return a list [[txid1, tx_dictionary1], ...]--")
     print(txid_txdict_list2)
 
