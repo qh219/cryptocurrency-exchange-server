@@ -260,7 +260,7 @@ def order_fill_detail(orderDict, numIter):
                 child_order_dict = {'buy_currency': new_order.buy_currency, 'sell_currency': new_order.sell_currency,
                                     'buy_amount': remained_difference, 'sell_amount': child_order_sell_amount,
                                     'sender_pk': new_order.sender_pk, 'receiver_pk': new_order.receiver_pk,
-                                    'creator_id': new_order.id}
+                                    'creator_id': new_order.id, 'tx_id': new_order.tx_id}
 
                 new_order_flag = True
 
@@ -313,7 +313,8 @@ def order_fill_detail(orderDict, numIter):
                                     sell_currency=existing_order.sell_currency,
                                     buy_amount=child_order_buy_amount,
                                     sell_amount=remained_difference,
-                                    creator_id=existing_order.id)
+                                    creator_id=existing_order.id,
+                                    tx_id = existing_order.tx_id)
 
                 g.session.add(child_order)
                 g.session.commit()
