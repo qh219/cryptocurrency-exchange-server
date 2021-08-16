@@ -325,9 +325,9 @@ def order_fill_detail(orderDict, numIter):
                 new_amount = min(existing_order.buy_amount, new_order.sell_amount)
 
                 tx_dict = {'platform': existing_order.buy_currency, 'order_id': existing_order.id,
-                'receiver_pk': existing_order.receiver_pk, 'amount': ex_amount}
+                'receiver_pk': existing_order.receiver_pk, 'amount': ex_amount,'tx_id': existing_order.tx_id}
                 tx_dict2 = {'platform': new_order.buy_currency, 'order_id': new_order.id,
-                'receiver_pk': new_order.receiver_pk, 'amount': new_amount}
+                'receiver_pk': new_order.receiver_pk, 'amount': new_amount,'tx_id': new_order.tx_id }
 
                 txes_dict_list.append(tx_dict)
                 txes_dict_list.append(tx_dict2)
