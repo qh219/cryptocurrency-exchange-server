@@ -172,13 +172,6 @@ def send_tokens_eth(w3, sender_sk, txes):  # *******************************
     tx_ids = []
     for i, tx in enumerate(txes):
         # Your code here
-        #tx_dict = {
-        #   'nonce': starting_nonce + i,  # Locally update nonce
-        #    'gasPrice': w3.eth.gas_price,
-        #    'gas': w3.eth.estimate_gas({'from': sender_pk, 'to': tx.receiver_pk, 'data': b'', 'amount': tx.amount}),
-        #    'to': tx.receiver_pk,  # ************************
-        #    'value': tx.amount,
-        #    'data': b''}
 
         print(tx)
         print(type(tx))
